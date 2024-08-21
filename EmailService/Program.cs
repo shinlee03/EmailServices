@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using System.Threading.RateLimiting;
+using Azure.Monitor.OpenTelemetry.AspNetCore;
 using EmailService.Authentication;
 using EmailService.Data;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -66,6 +67,8 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 });
 
 builder.Services.AddScoped<CustomAuthentication>();
+
+builder.Services.AddOpenTelemetry().UseAzureMonitor();
 
 var app = builder.Build();
 
