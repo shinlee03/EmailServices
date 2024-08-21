@@ -8,30 +8,31 @@ namespace EmailService.Controllers;
 public class EmailServiceController : ControllerBase
 {
     private readonly SmtpClient client;
+    private readonly ILogger<EmailServiceController> logger;
 
-    public EmailServiceController(SmtpClient _client)
+    public EmailServiceController(SmtpClient _client, ILogger<EmailServiceController> _logger)
     {
         client = _client;
+        logger = _logger;
     }
+
+    private const string sender = "noreply@shinlee.org";
     
     [HttpPost]
     [Route("send")]
-    public async Task Send()
+    public IActionResult Send([FromForm] EmailServiceRequest request)
     {
-        string sender = "donotreply@shinlee.org";
-        string recipient = "shinlee@umich.edu";
-        string subject = "Welcome to Azure Communication Service Email SMTP";
-        string body = "This email message is sent from Azure Communication Service Email using SMTP.";
-    
-        var message = new MailMessage(sender, recipient, subject, body);
+        var message = new MailMessage(sender, request.Recipient, request.Subject, request.Body);
         try
         {
             client.Send(message);
-            Console.WriteLine("The email was successfully sent using Smtp.");
+            logger.LogInformation($"Email sent to {request.Recipient} with subject {request.Subject} and Content {request.Body}.");
+            return Ok();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Smtp send failed with the exception: {ex.Message}.");
+            logger.LogWarning(ex, $"Email sending failed with the following exception: {ex.Message}");
+            return BadRequest();
         }
     }
 }
