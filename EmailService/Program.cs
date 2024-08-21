@@ -1,7 +1,11 @@
 using System.Net;
 using System.Net.Mail;
 using System.Threading.RateLimiting;
+using EmailService.Authentication;
+using EmailService.Data;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,15 +39,51 @@ var client = new SmtpClient(smtpHostUrl)
 
 builder.Services.AddSingleton<SmtpClient>(client);
 
+string connectionString = String.Empty;
+
+if (builder.Environment.IsDevelopment())
+{
+    builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
+    connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
+}
+else
+{
+    connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
+}
+
+builder.Services.AddDbContext<EmailAuthEntityDbContext>(options => options.UseSqlServer(connectionString,
+    optionsBuilder =>
+    {
+        optionsBuilder.EnableRetryOnFailure(3, TimeSpan.FromSeconds(10), null);
+    }));
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme).AddCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
+    options.SlidingExpiration = true;
+    options.AccessDeniedPath = "/";
+    options.EventsType = typeof(CustomAuthentication);
+});
+
+builder.Services.AddScoped<CustomAuthentication>();
+
 var app = builder.Build();
 
 app.UseRateLimiter();
 
 app.UseSwagger(); 
-app.UseSwaggerUI();
+app.UseSwaggerUI(options =>
+{
+    options.EnableTryItOutByDefault();
+});
 
 app.UseHttpsRedirection();
+app.UseCookiePolicy(new CookiePolicyOptions
+{
+    MinimumSameSitePolicy = SameSiteMode.Strict
+});
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
