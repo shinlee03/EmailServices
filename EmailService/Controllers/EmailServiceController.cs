@@ -25,7 +25,7 @@ public class EmailServiceController : ControllerBase
         context = _context;
     }
 
-    private const string sender = "noreply@shinlee.org";
+    private const string sender = "DoNotReply@shinlee.org";
     
     /// <summary>
     /// Sends an authentication email to the supplied email. Can only send one every day to prevent Dos.
@@ -37,23 +37,28 @@ public class EmailServiceController : ControllerBase
     [EnableRateLimiting("fixed")]
     public async Task<IActionResult> Authenticate([FromForm] EmailAuthenticateRequest request)
     {
+        bool created = false;
         try
         {
             var now = DateTime.UtcNow;
-            if (context.EmailAuthEntities.Any(x => x.Email == request.Email && (now - x.VerificationTime).TotalDays > 1))
+            if (context.EmailAuthEntities.AsEnumerable().Any(x => x.Email == request.Email && (now - x.VerificationTime).TotalDays <= 1))
             {
                 return BadRequest("Please reuse an already existing verification code.");
             }
-
             var authorizationCode = await CreateNewEntry(request.Email);
+            created = true;
             var message = new MailMessage(sender, request.Email, "Authentication Code for Shin Lee's portfolio",
                 $"Your verification code is {authorizationCode}. Please note that you can reuse your verification code for the next 24 hours.");
-
+            client.Send(message);
             return Created();
         }
         catch (Exception ex)
         {
             logger.LogError(ex, ex.Message);
+            if (created)
+            {
+                context.EmailAuthEntities.Remove(context.EmailAuthEntities.First(x => x.Email == request.Email));
+            }
             return StatusCode(500, "Internal Server Error");
         }
     }
@@ -126,6 +131,10 @@ public class EmailServiceController : ControllerBase
     [EnableRateLimiting("fixed")]
     public IActionResult SendToMyself([FromForm] EmailServiceRequest request)
     {
+        if (request.Recipient != HttpContext.User.Claims.Single(x => x.Type == ClaimTypes.Email).Value)
+        {
+            return Unauthorized("You can only send to your own email.");
+        }
         var message = new MailMessage(sender, request.Recipient, request.Subject, request.Body);
         try
         {
@@ -159,6 +168,6 @@ public class EmailServiceController : ControllerBase
         return authorizationCode;
     }
 
-    private bool ValidToken(string email, Guid token) => context.EmailAuthEntities.Any(x =>
+    private bool ValidToken(string email, Guid token) => context.EmailAuthEntities.AsEnumerable().Any(x =>
        !x.IsInvalid && x.Email == email && x.VerificationToken == token && (DateTime.UtcNow - x.VerificationTime).TotalDays <= 1.0);
 }

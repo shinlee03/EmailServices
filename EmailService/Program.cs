@@ -28,8 +28,8 @@ builder.Services.AddRateLimiter(opts =>
 
 string smtpAuthUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME")!;
 string smtpAuthPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD")!;
-
 string smtpHostUrl = Environment.GetEnvironmentVariable("SMTP_GET")!;
+
 var client = new SmtpClient(smtpHostUrl)
 {
     Port = 587,
@@ -37,17 +37,17 @@ var client = new SmtpClient(smtpHostUrl)
     EnableSsl = true
 };
 
-builder.Services.AddSingleton<SmtpClient>(client);
+builder.Services.AddSingleton(client);
 
-string connectionString = String.Empty;
+string connectionString;
 
-if (builder.Environment.IsDevelopment())
-{
-    builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
-    connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
-}
-else
-{
+ if (builder.Environment.IsDevelopment())
+ {
+     builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
+     connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
+ }
+ else
+ {
     connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
 }
 
