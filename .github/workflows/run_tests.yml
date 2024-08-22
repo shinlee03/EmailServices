@@ -5,7 +5,7 @@ on:
     branches: [ "**" ]
 
 jobs:
-  build:
+  integration-test:
     runs-on: ubuntu-latest
 
     steps:
