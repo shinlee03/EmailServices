@@ -70,6 +70,16 @@ builder.Services.AddScoped<CustomAuthentication>();
 
 builder.Services.AddOpenTelemetry().UseAzureMonitor();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: "AllowSpecificOrigins",
+        policy =>
+        {
+            policy.WithOrigins("http://shinlee.org", "http://www.shinlee.org")
+                .AllowAnyMethod();
+        });
+});
+
 var app = builder.Build();
 
 app.UseRateLimiter();
@@ -90,5 +100,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.UseCors("AllowSpecificOrigins");
 
 app.Run();

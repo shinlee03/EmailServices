@@ -149,6 +149,25 @@ public class EmailServiceController : ControllerBase
         }
     }
 
+    [HttpPost]
+    [Route("sendtoshin")]
+    [Authorize]
+    public IActionResult SendToShin([FromForm] EmailServiceRequest request)
+    {
+        var message = new MailMessage(sender, "shinlee@umich.edu", request.Subject, request.Body);
+        try
+        {
+            client.Send(message);
+            logger.LogInformation($"Email sent to {request.Recipient} with subject {request.Subject} and Content {request.Body}.");
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(ex, $"Email sending failed with the following exception: {ex.Message}");
+            return BadRequest();
+        }
+    }
+
     private async Task<Guid> CreateNewEntry(string email)
     {
         // remove already existing entries
