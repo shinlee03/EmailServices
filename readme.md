@@ -2,8 +2,8 @@
 
 This is a ASP.NET Core Service that handles basic email authentication and sending custom email messages via Azure Communications Service.
 
-- ### [Technologies Used](#technologies-used)
-- ### [Endpoints](#endpoints)
+- [Technologies Used](#technologies-used)
+- [Endpoints](#endpoints)
 
 ## Technologies Used
 
