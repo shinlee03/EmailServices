@@ -2,6 +2,8 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService", "EmailService\EmailService.csproj", "{634511DA-6015-42BF-8AB7-6E72906759C4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EmailService.Tests", "EmailService.Tests\EmailService.Tests.csproj", "{1154AD54-8C1F-4E23-AC0F-89A94B7206B1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -12,5 +14,9 @@ Global
 		{634511DA-6015-42BF-8AB7-6E72906759C4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{634511DA-6015-42BF-8AB7-6E72906759C4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{634511DA-6015-42BF-8AB7-6E72906759C4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1154AD54-8C1F-4E23-AC0F-89A94B7206B1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1154AD54-8C1F-4E23-AC0F-89A94B7206B1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1154AD54-8C1F-4E23-AC0F-89A94B7206B1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1154AD54-8C1F-4E23-AC0F-89A94B7206B1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

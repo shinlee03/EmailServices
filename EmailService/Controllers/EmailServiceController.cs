@@ -1,7 +1,7 @@
-using System.Globalization;
 using System.Net.Mail;
 using System.Security.Claims;
 using EmailService.Data;
+using EmailService.Data.Repository;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -13,20 +13,13 @@ namespace EmailService.Controllers;
 
 [ApiController]
 [Route("api")]
-public class EmailServiceController : ControllerBase
+public class EmailServiceController(
+    SmtpClient client,
+    ILogger<EmailServiceController> logger,
+    IEmailAuthRepository repository)
+    : ControllerBase
 {
-    private readonly SmtpClient client;
-    private readonly ILogger<EmailServiceController> logger;
-    private readonly EmailAuthEntityDbContext context;
-    
-    public EmailServiceController(SmtpClient _client, ILogger<EmailServiceController> _logger, EmailAuthEntityDbContext _context)
-    {
-        client = _client;
-        logger = _logger;
-        context = _context;
-    }
-
-    private const string sender = "DoNotReply@shinlee.org";
+    private const string Sender = "DoNotReply@shinlee.org";
     
     /// <summary>
     /// Sends an authentication email to the supplied email. Can only send one every day to prevent Dos.
@@ -42,13 +35,15 @@ public class EmailServiceController : ControllerBase
         try
         {
             var now = DateTime.UtcNow;
-            if (context.EmailAuthEntities.AsEnumerable().Any(x => x.Email == request.Email && (now - x.VerificationTime).TotalDays <= 1))
+            var existingEntries = repository.GetEntities(emailFilter: (s) => (s == request.Email),
+                verificationTimeFilter: (t) => (now - t).TotalDays <= 1);
+            if (existingEntries.Any())
             {
                 return BadRequest("Please reuse an already existing verification code.");
             }
             var authorizationCode = await CreateNewEntry(request.Email);
             created = true;
-            var message = new MailMessage(sender, request.Email, "Authentication Code for Shin Lee's portfolio",
+            var message = new MailMessage(Sender, request.Email, "Authentication Code for Shin Lee's portfolio",
                 $"Your verification code is {authorizationCode}. Please note that you can reuse your verification code for the next 24 hours.");
             client.Send(message);
             return Created();
@@ -58,7 +53,7 @@ public class EmailServiceController : ControllerBase
             logger.LogError(ex, ex.Message);
             if (created)
             {
-                context.EmailAuthEntities.Remove(context.EmailAuthEntities.First(x => x.Email == request.Email));
+                await repository.RemoveEntity(emailFilter: (e) => e == request.Email);
             }
             return StatusCode(500, "Internal Server Error");
         }
@@ -136,7 +131,7 @@ public class EmailServiceController : ControllerBase
         {
             return Unauthorized("You can only send to your own email.");
         }
-        var message = new MailMessage(sender, request.Recipient, request.Subject, request.Body);
+        var message = new MailMessage(Sender, request.Recipient, request.Subject, request.Body);
         try
         {
             client.Send(message);
@@ -155,7 +150,7 @@ public class EmailServiceController : ControllerBase
     [EnableCors("AllowSpecificOrigins")]
     public IActionResult SendToShin([FromForm] SendToShinRequest request)
     {
-        var message = new MailMessage(sender, "shinlee@umich.edu", request.Subject, request.Body);
+        var message = new MailMessage(Sender, "shinlee@umich.edu", request.Subject, request.Body);
         try
         {
             client.Send(message);
@@ -172,22 +167,18 @@ public class EmailServiceController : ControllerBase
     private async Task<Guid> CreateNewEntry(string email)
     {
         // remove already existing entries
-        context.EmailAuthEntities.RemoveRange(context.EmailAuthEntities.Where(x => x.Email == email).ToList());
+        await repository.RemoveEntity(emailFilter: (e) => e == email);
         
         // create new one
-        var authorizationCode = Guid.NewGuid();
-        var emailAuthenticationEntity = new EmailAuthEntity
-        {
-            Email = email,
-            VerificationToken = authorizationCode,
-            VerificationTime = DateTime.UtcNow,
-            IsInvalid = false
-        };
-        await context.EmailAuthEntities.AddAsync(emailAuthenticationEntity);
-        await context.SaveChangesAsync();
-        return authorizationCode;
+        var createdEntity = await repository.AddEntity(email);
+        return createdEntity.VerificationToken;
     }
 
-    private bool ValidToken(string email, Guid token) => context.EmailAuthEntities.AsEnumerable().Any(x =>
-       !x.IsInvalid && x.Email == email && x.VerificationToken == token && (DateTime.UtcNow - x.VerificationTime).TotalDays <= 1.0);
+    private bool ValidToken(string email, Guid token) =>
+        repository.GetEntities(
+            emailFilter: (e) => e == email,
+            verificationTokenFilter: (t) => t == token,
+            verificationTimeFilter: (d) => (DateTime.UtcNow - d).TotalDays <= 1,
+            isValidFilter: (v) => v == true
+        ).Any();
 }
