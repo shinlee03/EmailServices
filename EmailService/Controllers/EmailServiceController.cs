@@ -5,6 +5,7 @@ using EmailService.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -151,6 +152,7 @@ public class EmailServiceController : ControllerBase
 
     [HttpPost]
     [Route("sendtoshin")]
+    [EnableCors("AllowSpecificOrigins")]
     public IActionResult SendToShin([FromForm] SendToShinRequest request)
     {
         var message = new MailMessage(sender, "shinlee@umich.edu", request.Subject, request.Body);
