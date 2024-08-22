@@ -1,4 +1,4 @@
-using EmailService.Tests.IntegrationTests.Setup;
+using EmailService.Tests.Setup;
 
 namespace EmailService.Tests.IntegrationTests;
 
@@ -13,6 +13,7 @@ public class EmailServiceTests : BaseIntegrationTest
     public async Task PostAuthenticate_ValidEmail_ReturnsSuccess()
     {
         // Arrange
+        
         
     }
 }

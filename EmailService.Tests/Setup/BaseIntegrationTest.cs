@@ -5,7 +5,7 @@ using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
 using NSubstitute.ClearExtensions;
 
-namespace EmailService.Tests.IntegrationTests.Setup;
+namespace EmailService.Tests.Setup;
 
 public class BaseIntegrationTest : IDisposable, IClassFixture<IntegrationTestWebFactory>
 {

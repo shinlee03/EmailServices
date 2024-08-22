@@ -7,13 +7,13 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestPlatform.TestHost;
 using Testcontainers.MsSql;
 
-namespace EmailService.Tests.IntegrationTests.Setup;
+namespace EmailService.Tests.Setup;
 
 public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
     private readonly MsSqlContainer _dbContainer =
         new MsSqlBuilder()
-            .WithImage("mcr.microsoft.com/mssql/server:2012-latest")
+            .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
             .WithPassword("IntegrationTestPassWord_123!")
             .Build();
 
