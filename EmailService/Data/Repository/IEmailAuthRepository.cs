@@ -5,7 +5,7 @@ public interface IEmailAuthRepository
 {
     public IEnumerable<EmailAuthEntity> GetEntities(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null, Func<DateTime, bool>? verificationTimeFilter = null, Func<bool, bool>? isValidFilter= null);
 
-    public Task RemoveEntity(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null,
+    public Task<int> RemoveEntity(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null,
         Func<DateTime, bool>? verificationTimeFilter = null, Func<bool, bool>? isValidFilter = null);
     
     public Task<EmailAuthEntity> AddEntity(string email);

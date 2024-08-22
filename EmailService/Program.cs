@@ -29,3 +29,8 @@ app.MapControllers();
 app.UseCors("AllowSpecificOrigins");
 
 app.Run();
+
+public partial class Program
+{
+    
+}

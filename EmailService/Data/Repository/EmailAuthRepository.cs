@@ -13,7 +13,7 @@ public class EmailAuthRepository(EmailAuthEntityDbContext dbContext) : IEmailAut
             isValidFilter: isValidFilter);
     }
 
-    public async Task RemoveEntity(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null, Func<DateTime, bool>? verificationTimeFilter = null,
+    public async Task<int> RemoveEntity(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null, Func<DateTime, bool>? verificationTimeFilter = null,
         Func<bool, bool>? isValidFilter = null)
     {
         var query = _context.EmailAuthEntities.AsEnumerable();
@@ -21,10 +21,12 @@ public class EmailAuthRepository(EmailAuthEntityDbContext dbContext) : IEmailAut
             emailFilter: emailFilter, 
             verificationTokenFilter: verificationTokenFilter,
             verificationTimeFilter: verificationTimeFilter,
-            isValidFilter: isValidFilter);
+            isValidFilter: isValidFilter)
+            .ToList();
         
         _context.RemoveRange(query);
         await _context.SaveChangesAsync();
+        return query.Count();
     }
 
     public async Task<EmailAuthEntity> AddEntity(string email)

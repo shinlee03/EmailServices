@@ -6,17 +6,19 @@ using NSubstitute;
 using NSubstitute.ClearExtensions;
 
 namespace EmailService.Tests.Setup;
-
-public class BaseIntegrationTest : IDisposable, IClassFixture<IntegrationTestWebFactory>
+[Collection("IntegrationTestCollection")]
+public abstract class BaseIntegrationTest : IDisposable
 {
     protected readonly SmtpClient SmtpClient;
     protected readonly IEmailAuthRepository EmailAuthRepository;
     protected readonly IServiceScope ServiceScope;
     protected readonly EmailAuthEntityDbContext DatabaseContext;
 
-    protected BaseIntegrationTest(IntegrationTestWebFactory factory)
+    IntegrationTestWebFactory Factory;
+    public BaseIntegrationTest(IntegrationTestWebFactory factory)
     {
-        ServiceScope = factory.Services.CreateScope();
+        Factory = factory;
+        ServiceScope = Factory.Services.CreateScope();
         DatabaseContext = ServiceScope.ServiceProvider.GetRequiredService<EmailAuthEntityDbContext>();
         EmailAuthRepository = ServiceScope.ServiceProvider.GetRequiredService<IEmailAuthRepository>();
         
@@ -26,11 +28,53 @@ public class BaseIntegrationTest : IDisposable, IClassFixture<IntegrationTestWeb
 
     public void Dispose()
     {
-        // Dispose scope
-        ServiceScope.Dispose();
-        
         // Clear Substitutes
         SmtpClient.ClearSubstitute();
+        
+        // Clear Database
+        ClearData();
+    }
+
+    protected readonly EmailAuthEntity[] MockEmailAuthEntities =
+    {
+        new EmailAuthEntity
+        {
+            Email = "first@first.com",
+            IsInvalid = false,
+            VerificationTime = new DateTime(2024, 05, 02, 12, 0, 0),
+            VerificationToken = Guid.NewGuid()
+        },
+        new EmailAuthEntity
+        {
+            Email = "second@second.com",
+            IsInvalid = true,
+            VerificationToken = Guid.NewGuid(),
+            VerificationTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))
+        },
+        new EmailAuthEntity
+        {
+            Email = "second@second.com",
+            IsInvalid = false,
+            VerificationToken = Guid.NewGuid(),
+            VerificationTime = DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(5))
+        },
+        new EmailAuthEntity
+        {
+            Email = "third@third.com",
+            IsInvalid = false,
+            VerificationTime = DateTime.UtcNow,
+            VerificationToken = Guid.NewGuid()
+        },
+    };
+    protected async Task SetupData()
+    {
+        // clear database
+        ClearData();
+        
+        // Insert Mock Data
+        await DatabaseContext.EmailAuthEntities.AddRangeAsync(MockEmailAuthEntities);
+        await DatabaseContext.SaveChangesAsync();
     }
     
+    private void ClearData() => DatabaseContext.EmailAuthEntities.RemoveRange(DatabaseContext.EmailAuthEntities);
 }

@@ -68,9 +68,10 @@ public static class IocConfiguration
         });
 
         services.AddScoped<CustomAuthentication>();
-
-        services.AddOpenTelemetry().UseAzureMonitor();
-
+        if (builder.Environment.IsProduction())
+        {
+            services.AddOpenTelemetry().UseAzureMonitor();
+        }
         services.AddCors(options =>
         {
             options.AddPolicy("AllowSpecificOrigins",
@@ -81,7 +82,7 @@ public static class IocConfiguration
                 });
         });
 
-        services.AddSingleton<IEmailAuthRepository, EmailAuthRepository>();
+        services.AddScoped<IEmailAuthRepository, EmailAuthRepository>();
         return services;
     }
 }
