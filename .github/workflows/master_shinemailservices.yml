@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy ASP.Net Core app to Azure Web App - shinemailservices
+name: Build and deploy to Azure Web App
 
 on:
   push:
@@ -10,9 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  docker-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Docker Images
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('master_shinemailservices.yml') }
   build:
     runs-on: windows-latest
-
+    needs: docker-cache
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
       - uses: actions/checkout@v4
 
