@@ -18,6 +18,7 @@ This is a ASP.NET Core Service that handles basic email authentication and sendi
 ### Testing
 - NSubstitute
 - XUnit
+- TestContainers - Dockerized DB + EF
 
 ### Logging
 - OpenTelemetry (reporting to Azure)

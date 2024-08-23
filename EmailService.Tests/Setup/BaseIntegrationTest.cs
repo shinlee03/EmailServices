@@ -9,10 +9,10 @@ namespace EmailService.Tests.Setup;
 [Collection("IntegrationTestCollection")]
 public abstract class BaseIntegrationTest : IDisposable
 {
-    protected readonly SmtpClient SmtpClient;
     protected readonly IEmailAuthRepository EmailAuthRepository;
     protected readonly IServiceScope ServiceScope;
     protected readonly EmailAuthEntityDbContext DatabaseContext;
+    protected readonly HttpClient HttpClient;
 
     IntegrationTestWebFactory Factory;
     public BaseIntegrationTest(IntegrationTestWebFactory factory)
@@ -21,15 +21,13 @@ public abstract class BaseIntegrationTest : IDisposable
         ServiceScope = Factory.Services.CreateScope();
         DatabaseContext = ServiceScope.ServiceProvider.GetRequiredService<EmailAuthEntityDbContext>();
         EmailAuthRepository = ServiceScope.ServiceProvider.GetRequiredService<IEmailAuthRepository>();
-        
-        // mock external clients
-        SmtpClient = Substitute.For<SmtpClient>();
+        HttpClient = Factory.CreateClient();
     }
 
     public void Dispose()
     {
-        // Clear Substitutes
-        SmtpClient.ClearSubstitute();
+        // Clear Substitutes calls
+        Factory.SmtpClient.ClearReceivedCalls();
         
         // Clear Database
         ClearData();

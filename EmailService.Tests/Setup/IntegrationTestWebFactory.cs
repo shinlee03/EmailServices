@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Net.Mail;
 using DotNet.Testcontainers.Builders;
 using EmailService.Data;
 using Microsoft.AspNetCore.Hosting;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using NSubstitute;
 using Testcontainers.MsSql;
 
 namespace EmailService.Tests.Setup;
@@ -16,6 +18,8 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
     {
         
     }
+
+    public SmtpClient SmtpClient;
 
     private readonly MsSqlContainer _dbContainer =
         new MsSqlBuilder()
@@ -28,6 +32,9 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Mock SmtpClient
+        SmtpClient = Substitute.For<SmtpClient>();
+        
         builder.ConfigureTestServices(services =>
         {
             var descriptorType = typeof(DbContextOptions<EmailAuthEntityDbContext>);
@@ -46,6 +53,13 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
             {
                 options.UseSqlServer(_dbContainer.GetConnectionString());
             });
+            
+            // Add SmtpClient to DI 
+            if (services.Any(service => typeof(SmtpClient) == service.ServiceType))
+            {
+                services.Remove(services.Single(service => typeof(SmtpClient) == service.ServiceType));
+            }
+            services.AddSingleton<SmtpClient>(_ => SmtpClient);
         });
         
         builder.UseEnvironment("Development");
@@ -59,6 +73,7 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
         using var scope = Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<EmailAuthEntityDbContext>();
         await dbContext.Database.MigrateAsync();
+        
     }
 
     public new Task DisposeAsync()

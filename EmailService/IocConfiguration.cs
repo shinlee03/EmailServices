@@ -42,7 +42,7 @@ public static class IocConfiguration
             EnableSsl = true
         };
 
-        services.AddSingleton(client);
+        services.AddSingleton<SmtpClient>(client);
 
         string connectionString;
 
