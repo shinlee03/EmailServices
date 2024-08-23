@@ -47,6 +47,6 @@ jobs:
       - name: Install EF-Core
         run: dotnet tool install --global dotnet-ef
       - name: Run Migrations
-        run: export PATH="$PATH:/root/.dotnet/tools"; dotnet-ef database update
+        run: export PATH="$PATH:/root/.dotnet/tools"; dotnet-ef database update --project EmailService/EmailService.csproj
       - name: Run Tests
         run: dotnet test --no-build --verbosity normal
