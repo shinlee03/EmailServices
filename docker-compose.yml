@@ -22,7 +22,7 @@ services:
       start_period: 10s
     image: "mcr.microsoft.com/mssql/server"
     environment:
-      - "MSSQL_SA_PASSWORD=Password!"
+      - "MSSQL_SA_PASSWORD=Password123!"
       - "ACCEPT_EULA=Y"
     ports:
       - "1433:1433"

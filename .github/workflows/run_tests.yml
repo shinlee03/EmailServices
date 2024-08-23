@@ -32,7 +32,7 @@ jobs:
         ports: 
           - 1433:1433
     env:
-      AZURE_SQL_CONNECTIONSTRING: "Data Source=localhost,1433; User Id='SA'; Password='Password123!'"
+      AZURE_SQL_CONNECTIONSTRING: "Data Source=localhost,1433; User Id='SA'; Password='Password123!';Encrypt=False;TrustServerCertificate=True"
     steps:
       - name: Checkout Repository 
         uses: actions/checkout@v4
