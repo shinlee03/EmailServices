@@ -7,9 +7,18 @@ on:
   workflow_dispatch:
 
 jobs:
+  docker-cache:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Docker Images
+        uses: ScribeMD/docker-cache@0.5.0
+        with:
+          key: docker-${{ runner.os }}-${{ hashFiles('master_shinemailservices.yml') }
   build:
     runs-on: windows-latest
-
+    needs: docker-cache
+    env:
+      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
     steps:
       - uses: actions/checkout@v4
 
@@ -17,6 +26,8 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.x'
+          cache: true
+        run: dotnet restore --locked-mode
 
       - name: Build with dotnet
         run: dotnet build --configuration Release
