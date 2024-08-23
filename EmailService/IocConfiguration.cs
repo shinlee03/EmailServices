@@ -34,9 +34,14 @@ public static class IocConfiguration
         var smtpAuthUsername = Environment.GetEnvironmentVariable("SMTP_USERNAME")!;
         var smtpAuthPassword = Environment.GetEnvironmentVariable("SMTP_PASSWORD")!;
         var smtpHostUrl = Environment.GetEnvironmentVariable("SMTP_GET")!;
-
-        var client = new SmtpClient(smtpHostUrl)
+        
+        var client = builder.Environment.IsDevelopment() ? new SmtpClient
         {
+            PickupDirectoryLocation = Directory.GetCurrentDirectory(),
+            DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory
+        } :  new SmtpClient
+        {
+            Host = smtpHostUrl,
             Port = 587,
             Credentials = new NetworkCredential(smtpAuthUsername, smtpAuthPassword),
             EnableSsl = true

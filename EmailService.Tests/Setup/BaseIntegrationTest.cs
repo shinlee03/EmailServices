@@ -12,58 +12,57 @@ public abstract class BaseIntegrationTest : IDisposable
     protected readonly IEmailAuthRepository EmailAuthRepository;
     protected readonly IServiceScope ServiceScope;
     protected readonly EmailAuthEntityDbContext DatabaseContext;
+    protected readonly SmtpClient SmtpClient;
     protected readonly HttpClient HttpClient;
 
-    IntegrationTestWebFactory Factory;
+    protected readonly IntegrationTestWebFactory Factory;
     public BaseIntegrationTest(IntegrationTestWebFactory factory)
     {
         Factory = factory;
         ServiceScope = Factory.Services.CreateScope();
         DatabaseContext = ServiceScope.ServiceProvider.GetRequiredService<EmailAuthEntityDbContext>();
         EmailAuthRepository = ServiceScope.ServiceProvider.GetRequiredService<IEmailAuthRepository>();
+        
         HttpClient = Factory.CreateClient();
     }
 
     public void Dispose()
     {
-        // Clear Substitutes calls
-        Factory.SmtpClient.ClearReceivedCalls();
-        
         // Clear Database
         ClearData();
     }
 
     protected readonly EmailAuthEntity[] MockEmailAuthEntities =
-    {
-        new EmailAuthEntity
+    [
+        new EmailAuthEntity()
         {
             Email = "first@first.com",
             IsInvalid = false,
             VerificationTime = new DateTime(2024, 05, 02, 12, 0, 0),
             VerificationToken = Guid.NewGuid()
         },
-        new EmailAuthEntity
+        new EmailAuthEntity()
         {
             Email = "second@second.com",
             IsInvalid = true,
             VerificationToken = Guid.NewGuid(),
             VerificationTime = DateTime.UtcNow.Subtract(TimeSpan.FromDays(1))
         },
-        new EmailAuthEntity
+        new EmailAuthEntity()
         {
             Email = "second@second.com",
             IsInvalid = false,
             VerificationToken = Guid.NewGuid(),
             VerificationTime = DateTime.UtcNow.Subtract(TimeSpan.FromSeconds(5))
         },
-        new EmailAuthEntity
+        new EmailAuthEntity()
         {
             Email = "third@third.com",
             IsInvalid = false,
             VerificationTime = DateTime.UtcNow,
             VerificationToken = Guid.NewGuid()
-        },
-    };
+        }
+    ];
     protected async Task SetupData()
     {
         // clear database

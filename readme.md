@@ -2,6 +2,20 @@
 
 This is a ASP.NET Core Service that handles basic email authentication and sending custom email messages via Azure Communications Service.
 
+To get started, clone this repo and run
+
+```
+docker compose up
+```
+
+To create mock databases & run migrations, and run:
+
+```
+dotnet run --project EmailService/EmailService.csproj
+```
+
+To start the service. You can access the swagger page at `localhost/swagger/index.html`.
+
 - [Technologies Used](#technologies-used)
 - [Endpoints](#endpoints)
 
@@ -19,6 +33,7 @@ This is a ASP.NET Core Service that handles basic email authentication and sendi
 - NSubstitute
 - XUnit
 - TestContainers - Dockerized DB + EF
+- Docker - SQL
 
 ### Logging
 - OpenTelemetry (reporting to Azure)

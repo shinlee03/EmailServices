@@ -1,0 +1,28 @@
+﻿version: '3.7'
+
+services:
+  migrations:
+    container_name: emailservicemigrations
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    restart: "no"
+    entrypoint: ["dotnet-ef", "database", "update"]
+  sqlserver:
+    container_name: sqlserver
+    hostname: sqlserver
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 2s
+      retries: 5
+      start_period: 10s
+    image: "mcr.microsoft.com/mssql/server"
+    environment:
+      - "MSSQL_SA_PASSWORD=Password!"
+      - "ACCEPT_EULA=Y"
+    ports:
+      - "1433:1433"

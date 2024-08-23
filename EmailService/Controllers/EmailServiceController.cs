@@ -1,6 +1,5 @@
 using System.Net.Mail;
 using System.Security.Claims;
-using EmailService.Data;
 using EmailService.Data.Repository;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -14,9 +13,9 @@ namespace EmailService.Controllers;
 [ApiController]
 [Route("api")]
 public class EmailServiceController(
-    SmtpClient client,
     ILogger<EmailServiceController> logger,
-    IEmailAuthRepository repository)
+    IEmailAuthRepository emailAuthRepository,
+    SmtpClient smtpClient)
     : ControllerBase
 {
     private const string Sender = "DoNotReply@shinlee.org";
@@ -35,7 +34,7 @@ public class EmailServiceController(
         try
         {
             var now = DateTime.UtcNow;
-            var existingEntries = repository.GetEntities(emailFilter: (s) => (s == request.Email),
+            var existingEntries = emailAuthRepository.GetEntities(emailFilter: (s) => (s == request.Email),
                 verificationTimeFilter: (t) => (now - t).TotalDays <= 1);
             if (existingEntries.Any())
             {
@@ -45,7 +44,7 @@ public class EmailServiceController(
             created = true;
             var message = new MailMessage(Sender, request.Email, "Authentication Code for Shin Lee's portfolio",
                 $"Your verification code is {authorizationCode}. Please note that you can reuse your verification code for the next 24 hours.");
-            client.Send(message);
+            await smtpClient.SendMailAsync(message);
             return Created();
         }
         catch (Exception ex)
@@ -53,7 +52,7 @@ public class EmailServiceController(
             logger.LogError(ex, ex.Message);
             if (created)
             {
-                await repository.RemoveEntity(emailFilter: (e) => e == request.Email);
+                await emailAuthRepository.RemoveEntity(emailFilter: (e) => e == request.Email);
             }
             return StatusCode(500, "Internal Server Error");
         }
@@ -125,7 +124,7 @@ public class EmailServiceController(
     [Route("send")]
     [Authorize]
     [EnableRateLimiting("fixed")]
-    public IActionResult SendToMyself([FromForm] EmailServiceRequest request)
+    public async Task<IActionResult> SendToMyself([FromForm] EmailServiceRequest request)
     {
         if (request.Recipient != HttpContext.User.Claims.Single(x => x.Type == ClaimTypes.Email).Value)
         {
@@ -134,7 +133,7 @@ public class EmailServiceController(
         var message = new MailMessage(Sender, request.Recipient, request.Subject, request.Body);
         try
         {
-            client.Send(message);
+            await smtpClient.SendMailAsync(message);
             logger.LogInformation($"Email sent to {request.Recipient} with subject {request.Subject} and Content {request.Body}.");
             return Ok();
         }
@@ -148,12 +147,12 @@ public class EmailServiceController(
     [HttpPost]
     [Route("sendtoshin")]
     [EnableCors("AllowSpecificOrigins")]
-    public IActionResult SendToShin([FromForm] SendToShinRequest request)
+    public async Task<IActionResult> SendToShin([FromForm] SendToShinRequest request)
     {
         var message = new MailMessage(Sender, "shinlee@umich.edu", request.Subject, request.Body);
         try
         {
-            client.Send(message);
+            await smtpClient.SendMailAsync(message);
             logger.LogInformation($"Email sent to shinlee@umich.edu with subject {request.Subject} and Content {request.Body}.");
             return Ok();
         }
@@ -167,15 +166,15 @@ public class EmailServiceController(
     private async Task<Guid> CreateNewEntry(string email)
     {
         // remove already existing entries
-        await repository.RemoveEntity(emailFilter: (e) => e == email);
+        await emailAuthRepository.RemoveEntity(emailFilter: (e) => e == email);
         
         // create new one
-        var createdEntity = await repository.AddEntity(email);
+        var createdEntity = await emailAuthRepository.AddEntity(email);
         return createdEntity.VerificationToken;
     }
 
     private bool ValidToken(string email, Guid token) =>
-        repository.GetEntities(
+        emailAuthRepository.GetEntities(
             emailFilter: (e) => e == email,
             verificationTokenFilter: (t) => t == token,
             verificationTimeFilter: (d) => (DateTime.UtcNow - d).TotalDays <= 1,

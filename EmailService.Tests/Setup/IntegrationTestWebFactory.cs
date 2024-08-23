@@ -18,9 +18,7 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
     {
         
     }
-
-    public SmtpClient SmtpClient;
-
+    
     private readonly MsSqlContainer _dbContainer =
         new MsSqlBuilder()
             .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
@@ -32,9 +30,6 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-        // Mock SmtpClient
-        SmtpClient = Substitute.For<SmtpClient>();
-        
         builder.ConfigureTestServices(services =>
         {
             var descriptorType = typeof(DbContextOptions<EmailAuthEntityDbContext>);
@@ -59,7 +54,6 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
             {
                 services.Remove(services.Single(service => typeof(SmtpClient) == service.ServiceType));
             }
-            services.AddSingleton<SmtpClient>(_ => SmtpClient);
         });
         
         builder.UseEnvironment("Development");

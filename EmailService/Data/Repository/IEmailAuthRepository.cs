@@ -1,6 +1,6 @@
 namespace EmailService.Data.Repository;
 
-// CRUD 
+// CRUD Operations of EmailAuthEntities
 public interface IEmailAuthRepository
 {
     public IEnumerable<EmailAuthEntity> GetEntities(Func<string, bool>? emailFilter = null, Func<Guid, bool>? verificationTokenFilter = null, Func<DateTime, bool>? verificationTimeFilter = null, Func<bool, bool>? isValidFilter= null);
