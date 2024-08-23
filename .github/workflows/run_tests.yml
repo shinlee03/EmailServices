@@ -25,7 +25,7 @@ jobs:
           ACCEPT_EULA: Y
           MSSQL_SA_PASSWORD: "Password!"
         options: >-
-          --health-cmd '/opt/mssql-tools18/bin/sqlcmd -U sa -P "$${MSSQL_SA_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null'
+          --health-cmd "/opt/mssql-tools18/bin/sqlcmd -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q \"SELECT 1\" -b -o /dev/null"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 2
