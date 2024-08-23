@@ -6,7 +6,8 @@
         <Nullable>enable</Nullable>
 
         <IsPackable>false</IsPackable>
-        <DisableImplicitNugetFallbackFolder>true</DisableImplicitNugetFallbackFolder>
+        <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+        <DisableImplicitNuGetFallbackFolder>true</DisableImplicitNuGetFallbackFolder>
     </PropertyGroup>
 
     <ItemGroup>
