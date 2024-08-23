@@ -1,9 +1,6 @@
-using System.Net.Mail;
 using EmailService.Data;
 using EmailService.Data.Repository;
 using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
-using NSubstitute.ClearExtensions;
 
 namespace EmailService.Tests.Setup;
 [Collection("IntegrationTestCollection")]
@@ -12,9 +9,7 @@ public abstract class BaseIntegrationTest : IDisposable
     protected readonly IEmailAuthRepository EmailAuthRepository;
     protected readonly IServiceScope ServiceScope;
     protected readonly EmailAuthEntityDbContext DatabaseContext;
-    protected readonly SmtpClient SmtpClient;
-    protected readonly HttpClient HttpClient;
-
+    protected readonly HttpClient Client;
     protected readonly IntegrationTestWebFactory Factory;
     public BaseIntegrationTest(IntegrationTestWebFactory factory)
     {
@@ -22,8 +17,8 @@ public abstract class BaseIntegrationTest : IDisposable
         ServiceScope = Factory.Services.CreateScope();
         DatabaseContext = ServiceScope.ServiceProvider.GetRequiredService<EmailAuthEntityDbContext>();
         EmailAuthRepository = ServiceScope.ServiceProvider.GetRequiredService<IEmailAuthRepository>();
-        
-        HttpClient = Factory.CreateClient();
+
+        Client = Factory.CreateClient();
     }
 
     public void Dispose()

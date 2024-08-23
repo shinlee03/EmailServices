@@ -163,6 +163,11 @@
           "Docker.DotNet": "3.125.15"
         }
       },
+      "FluentValidation": {
+        "type": "Transitive",
+        "resolved": "11.9.2",
+        "contentHash": "XeHp9LvFvu1fsQ/NvDCymV02GOCB1nz7ZUhfpI3uMhCcHTkV1K5bMkv+Nc/kuNYyAsX5+5bcmUanIEMd5QN+Eg=="
+      },
       "Microsoft.AspNetCore.TestHost": {
         "type": "Transitive",
         "resolved": "8.0.8",
@@ -1789,6 +1794,7 @@
         "type": "Project",
         "dependencies": {
           "Azure.Monitor.OpenTelemetry.AspNetCore": "[1.2.0, )",
+          "FluentValidation": "[11.9.2, )",
           "Microsoft.EntityFrameworkCore": "[9.0.0-preview.7.24405.3, )",
           "Microsoft.EntityFrameworkCore.SqlServer": "[9.0.0-preview.7.24405.3, )",
           "Microsoft.Extensions.DependencyInjection": "[9.0.0-preview.7.24405.7, )",

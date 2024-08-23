@@ -2,11 +2,13 @@ using System.Data.Common;
 using System.Net.Mail;
 using DotNet.Testcontainers.Builders;
 using EmailService.Data;
+using EmailService.Smtp;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using NSubstitute;
 using Testcontainers.MsSql;
 
@@ -28,32 +30,24 @@ public class IntegrationTestWebFactory : WebApplicationFactory<Program>, IAsyncL
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(1433))
             .Build();
 
+    public ISmtpClient MockSmtpClient;
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.ConfigureTestServices(services =>
         {
-            var descriptorType = typeof(DbContextOptions<EmailAuthEntityDbContext>);
-            var descriptor = services.SingleOrDefault(s => s.ServiceType == descriptorType);
-            if (descriptor is not null)
-            {
-                services.Remove(descriptor);
-            }
+            services.RemoveAll(typeof(DbContextOptions<EmailAuthEntityDbContext>));
 
-            if (services.Any(service => typeof(DbConnection) == service.ServiceType))
-            {
-                services.Remove(services.SingleOrDefault(service => typeof(DbConnection) == service.ServiceType)!);
-            }
-
+            services.RemoveAll(typeof(DbConnection));
             services.AddDbContext<EmailAuthEntityDbContext>(options =>
             {
                 options.UseSqlServer(_dbContainer.GetConnectionString());
             });
             
-            // Add SmtpClient to DI 
-            if (services.Any(service => typeof(SmtpClient) == service.ServiceType))
-            {
-                services.Remove(services.Single(service => typeof(SmtpClient) == service.ServiceType));
-            }
+            // Add SmtpClient Mock to DI 
+            services.RemoveAll(typeof(ISmtpClient));
+            MockSmtpClient = Substitute.For<ISmtpClient>();
+            MockSmtpClient.SendMailAsync(Arg.Any<MailMessage>()).ReturnsForAnyArgs(Task.CompletedTask);
+            services.AddSingleton<ISmtpClient>(MockSmtpClient);
         });
         
         builder.UseEnvironment("Development");

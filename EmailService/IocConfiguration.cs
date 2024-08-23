@@ -3,8 +3,12 @@ using System.Net.Mail;
 using System.Threading.RateLimiting;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using EmailService.Authentication;
+using EmailService.Controllers;
+using EmailService.Controllers.Validators;
 using EmailService.Data;
 using EmailService.Data.Repository;
+using EmailService.Smtp;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -47,9 +51,15 @@ public static class IocConfiguration
             EnableSsl = true
         };
 
-        services.AddSingleton<SmtpClient>(client);
+        services.AddTransient<ISmtpClient>(_ => new SmtpClientImpl(client));
         
         var connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
+
+        if (builder.Environment.IsDevelopment())
+        {
+            connectionString =
+                "Data Source=localhost,1433; User Id='SA'; Password='Password123!';Encrypt=False;TrustServerCertificate=True";
+        }
 
         services.AddDbContext<EmailAuthEntityDbContext>(options => options.UseSqlServer(connectionString,
             optionsBuilder => { optionsBuilder.EnableRetryOnFailure(3, TimeSpan.FromSeconds(10), null); }));
@@ -78,6 +88,9 @@ public static class IocConfiguration
         });
 
         services.AddScoped<IEmailAuthRepository, EmailAuthRepository>();
+
+        services.AddScoped<IValidator<EmailServiceRequest>, EmailServiceRequestValidator>();
+        services.AddScoped<IValidator<CreateCookieRequest>, CreateCookieRequestValidator>();
         return services;
     }
 }

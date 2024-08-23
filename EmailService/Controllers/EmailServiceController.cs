@@ -1,6 +1,8 @@
 using System.Net.Mail;
 using System.Security.Claims;
 using EmailService.Data.Repository;
+using EmailService.Smtp;
+using FluentValidation;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -15,7 +17,8 @@ namespace EmailService.Controllers;
 public class EmailServiceController(
     ILogger<EmailServiceController> logger,
     IEmailAuthRepository emailAuthRepository,
-    SmtpClient smtpClient)
+    ISmtpClient smtpClient,
+    IValidator<CreateCookieRequest> createCookieRequestValidator)
     : ControllerBase
 {
     private const string Sender = "DoNotReply@shinlee.org";
@@ -28,33 +31,33 @@ public class EmailServiceController(
     [HttpPost]
     [Route("authenticate")]
     [EnableRateLimiting("fixed")]
-    public async Task<IActionResult> Authenticate([FromForm] EmailAuthenticateRequest request)
+    public async Task<IActionResult> Authenticate([FromForm] string Email)
     {
         bool created = false;
         try
         {
             var now = DateTime.UtcNow;
-            var existingEntries = emailAuthRepository.GetEntities(emailFilter: (s) => (s == request.Email),
+            var existingEntries = emailAuthRepository.GetEntities(emailFilter: (s) => (s == Email),
                 verificationTimeFilter: (t) => (now - t).TotalDays <= 1);
             if (existingEntries.Any())
             {
                 return BadRequest("Please reuse an already existing verification code.");
             }
-            var authorizationCode = await CreateNewEntry(request.Email);
+            var authorizationCode = await CreateNewEntry(Email);
             created = true;
-            var message = new MailMessage(Sender, request.Email, "Authentication Code for Shin Lee's portfolio",
+            var message = new MailMessage(Sender, Email, "Authentication Code for Shin Lee's portfolio",
                 $"Your verification code is {authorizationCode}. Please note that you can reuse your verification code for the next 24 hours.");
             await smtpClient.SendMailAsync(message);
-            return Created();
+            return StatusCode(201, "Created");
         }
         catch (Exception ex)
         {
             logger.LogError(ex, ex.Message);
             if (created)
             {
-                await emailAuthRepository.RemoveEntity(emailFilter: (e) => e == request.Email);
+                await emailAuthRepository.RemoveEntity(emailFilter: (e) => e == Email);
             }
-            return StatusCode(500, "Internal Server Error");
+            return StatusCode(500, "Internal Server Error from method.");
         }
     }
     
@@ -67,6 +70,11 @@ public class EmailServiceController(
     [Route("session")]
     public async Task<IActionResult> CreateCookie([FromForm] CreateCookieRequest request)
     {
+        var validate = await createCookieRequestValidator.ValidateAsync(request);
+        if (!validate.IsValid)
+        {
+            return BadRequest(string.Join(", ", validate.Errors.Select(e => e.ErrorMessage)));
+        }
         if (!ValidToken(request.Email, request.AuthenticationCode))
         {
             return Unauthorized("Invalid token");
