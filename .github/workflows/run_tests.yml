@@ -20,7 +20,7 @@ jobs:
     needs: docker-cache
     services: 
       mssql:
-        image: mssql
+        image: mcr.microsoft.com/mssql/server
         env: 
           ACCEPT_EULA: Y
           MSSQL_SA_PASSWORD: "Password!"
