@@ -32,7 +32,7 @@ jobs:
         ports: 
           - 1433:1433
     env:
-      NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+      AZURE_SQL_CONNECTIONSTRING: "Data Source=localhost,1433; User Id='SA'; Password='Password123!'"
     steps:
       - name: Checkout Repository 
         uses: actions/checkout@v4

@@ -48,18 +48,8 @@ public static class IocConfiguration
         };
 
         services.AddSingleton<SmtpClient>(client);
-
-        string connectionString;
-
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Configuration.AddEnvironmentVariables().AddJsonFile("appsettings.Development.json");
-            connectionString = builder.Configuration.GetConnectionString("AZURE_SQL_CONNECTIONSTRING")!;
-        }
-        else
-        {
-            connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
-        }
+        
+        var connectionString = Environment.GetEnvironmentVariable("AZURE_SQL_CONNECTIONSTRING")!;
 
         services.AddDbContext<EmailAuthEntityDbContext>(options => options.UseSqlServer(connectionString,
             optionsBuilder => { optionsBuilder.EnableRetryOnFailure(3, TimeSpan.FromSeconds(10), null); }));
